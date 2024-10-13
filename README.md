@@ -1,14 +1,18 @@
+//importing of all the needed java Packages
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableModel;// 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
+import java.util.LinkedList;
 
+// Class to represent a contact with name, phone number, and email
 class Contact {
     String name;
     String phoneNumber;
     String email;
 
+    // Constructor to create a new contact
     Contact(String name, String phoneNumber, String email) {
         this.name = name;
         this.phoneNumber = phoneNumber;
@@ -16,161 +20,287 @@ class Contact {
     }
 }
 
-public class JJ extends JFrame {
-    ArrayList<Contact> contacts = new ArrayList<>();
-    JTextField nameField, phoneField, emailField, searchField;
-    JTable contactTable;
-    DefaultTableModel tableModel;
+// Custom JButton class to create buttons with rounded edges
+class RoundedButton extends JButton {
+    private final int radius; // Radius for rounded corners
 
-    public JJ() {
-        setTitle("Enhanced Phonebook Application");
-        setSize(600, 500);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    // Constructor for the rounded button
+    RoundedButton(String text, int radius) {
+        super(text);
+        this.radius = radius; // Set the radius
+        setBorder(new EmptyBorder(10, 10, 10, 10)); // Optional padding
+        setContentAreaFilled(false); // Remove default button background
+    }
 
-        // Set the background color of the entire frame
-        getContentPane().setBackground(new Color(50, 50, 50)); // Classy grey background
+    // Override paintComponent to draw the button with rounded corners
+    @Override
+    protected void paintComponent(Graphics g) {
+        if (getModel().isArmed()) { // If the button is pressed
+            g.setColor(getBackground().darker()); // Darker color for pressed state
+        } else {
+            g.setColor(getBackground()); // Normal button color
+        }
+        // Draw the rounded rectangle
+        g.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
+        super.paintComponent(g); // Call the parent method
+    }
+}
 
-        // Use BorderLayout for structure
-        setLayout(new BorderLayout());
+// Main class for the phonebook application
+public class Main extends JFrame {
+    LinkedList<Contact> contactList = new LinkedList<>(); // List to store contacts
+    JTextField nameField, phoneField, emailField; // Input fields for contact details
+    JTable contactTable; // Table to display contacts
+    DefaultTableModel tableModel; // Model for the contact table
 
-        // Top panel for contact input
-        JPanel inputPanel = new JPanel(new GridLayout(4, 2, 10, 10));
-        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        inputPanel.setBackground(new Color(50, 50, 50)); // Apply grey background to the panel as well
-        inputPanel.setForeground(Color.WHITE); // Set text color to white for better readability
+    // Constructor to set up the main application frame
+    public Main() {
+        setTitle("Mobile Phonebook"); // Set the title
+        setSize(400, 600); // Set the size of the window
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Close on exit
+        setLayout(new CardLayout()); // Use CardLayout for switching pages
 
-        // Input fields and labels
-        JLabel nameLabel = new JLabel("Name:");
-        nameLabel.setForeground(Color.WHITE);
-        inputPanel.add(nameLabel);
+        // Create Intro Page and add it to the frame
+        JPanel introPanel = createIntroPage();
+        add(introPanel, "Intro");
+
+        // Create Main Content Panel and add it to the frame
+        JPanel contentPanel = createMainPage();
+        add(contentPanel, "Main");
+
+        setVisible(true); // Make the frame visible
+    }
+
+    // Method to create the intro page with a welcome message and a button
+    private JPanel createIntroPage() {
+        JPanel introPanel = new JPanel(); // Create a new panel
+        introPanel.setLayout(new BorderLayout()); // Set layout to BorderLayout
+        introPanel.setBackground(new Color(211, 211, 211)); // Set background color to light gray
+
+        // Create and set up the welcome label
+        JLabel welcomeLabel = new JLabel("Welcome to PhoneBooker", SwingConstants.CENTER);
+        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 24)); // Set font for the label
+        introPanel.add(welcomeLabel, BorderLayout.CENTER); // Add label to the center of the panel
+
+        // Create a button to proceed to the main page
+        RoundedButton proceedBtn = new RoundedButton("Proceed", 15);
+        proceedBtn.setBackground(new Color(0, 123, 255)); // Set button color to sexy blue
+        proceedBtn.setForeground(Color.WHITE); // Set button text color to white
+        proceedBtn.addActionListener(e -> switchToMainPage()); // Add action listener for button click
+
+        // Create a panel for the button and add it to the intro panel
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(proceedBtn);
+        introPanel.add(buttonPanel, BorderLayout.SOUTH); // Add button panel to the south of the intro panel
+
+        return introPanel; // Return the completed intro panel
+    }
+
+    // Method to create the main content page
+    private JPanel createMainPage() {
+        JPanel contentPanel = new JPanel(); // Create a new panel for the main page
+        contentPanel.setLayout(new BorderLayout()); // Set layout to BorderLayout
+        contentPanel.setBackground(new Color(211, 211, 211)); // Set background color to light gray
+
+        // Create Header Panel with the application title
+        JPanel headerPanel = new JPanel();
+        JLabel headerLabel = new JLabel("Phonebook App", SwingConstants.CENTER);
+        headerLabel.setFont(new Font("Arial", Font.BOLD, 24)); // Set font for the header
+        headerPanel.setBackground(new Color(51, 153, 255)); // Set header background color
+        headerLabel.setForeground(Color.WHITE); // Set header text color to white
+        headerPanel.add(headerLabel); // Add header label to the header panel
+        contentPanel.add(headerPanel, BorderLayout.NORTH); // Add header panel to the north of the content panel
+
+        // Input fields for adding contacts
+        JPanel inputPanel = new JPanel(new GridLayout(3, 2, 10, 10)); // Create a grid layout
+        inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Set border for input panel
+
+        // Create input fields for contact details
         nameField = new JTextField();
-        inputPanel.add(nameField);
-
-        JLabel phoneLabel = new JLabel("Phone Number:");
-        phoneLabel.setForeground(Color.WHITE);
-        inputPanel.add(phoneLabel);
         phoneField = new JTextField();
-        inputPanel.add(phoneField);
-
-        JLabel emailLabel = new JLabel("Email:");
-        emailLabel.setForeground(Color.WHITE);
-        inputPanel.add(emailLabel);
         emailField = new JTextField();
+
+        // Add labels and fields to the input panel
+        inputPanel.add(new JLabel("Name:"));
+        inputPanel.add(nameField);
+        inputPanel.add(new JLabel("Phone Number:"));
+        inputPanel.add(phoneField);
+        inputPanel.add(new JLabel("Email:"));
         inputPanel.add(emailField);
 
-        // Insert button with blue color
-        JButton insertBtn = new JButton("Insert Contact");
-        styleButton(insertBtn);
-        insertBtn.addActionListener(e -> insertContact());
-        inputPanel.add(insertBtn);
+        contentPanel.add(inputPanel, BorderLayout.NORTH); // Add input panel to the north of the content panel
 
-        add(inputPanel, BorderLayout.NORTH);
+        // Create a table to display contacts
+        tableModel = new DefaultTableModel(new String[]{"Name", "Phone", "Email"}, 0); // Set table model
+        contactTable = new JTable(tableModel); // Create the table
+        JScrollPane scrollPane = new JScrollPane(contactTable); // Add scroll pane for the table
+        contentPanel.add(scrollPane, BorderLayout.CENTER); // Add scroll pane to the center of the content panel
 
-        // Table for displaying contacts
-        tableModel = new DefaultTableModel(new String[]{"Name", "Phone Number", "Email"}, 0);
-        contactTable = new JTable(tableModel);
-        JScrollPane scrollPane = new JScrollPane(contactTable);
-        add(scrollPane, BorderLayout.CENTER);
+        // Create Bottom Panel for action buttons
+        JPanel actionPanel = new JPanel(new GridLayout(2, 3, 10, 10)); // Create grid layout for buttons
+        actionPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // Set border for action panel
 
-        // Bottom panel for search and delete
-        JPanel actionPanel = new JPanel();
-        actionPanel.setLayout(new FlowLayout());
-        actionPanel.setBackground(new Color(50, 50, 50)); // Grey background for action panel
+        // Create action buttons using RoundedButton
+        RoundedButton insertBtn = new RoundedButton("Add", 15);
+        insertBtn.setBackground(new Color(0, 123, 255)); // Set button color to sexy blue
+        insertBtn.setForeground(Color.WHITE); // Set button text color to white
+        insertBtn.addActionListener(e -> insertContact()); // Add action listener to insert contact
 
-        // Search field and button
-        searchField = new JTextField(15);
-        actionPanel.add(new JLabel("Search:"));
-        JButton searchBtn = new JButton("Search");
-        styleButton(searchBtn);
-        searchBtn.addActionListener(e -> searchContact());
-        actionPanel.add(searchField);
+        RoundedButton searchBtn = new RoundedButton("Search", 15);
+        searchBtn.setBackground(new Color(0, 123, 255)); // Set button color to sexy blue
+        searchBtn.setForeground(Color.WHITE); // Set button text color to white
+        searchBtn.addActionListener(e -> searchContact()); // Add action listener to search contact
+
+        RoundedButton displayAllBtn = new RoundedButton("Display All", 15);
+        displayAllBtn.setBackground(new Color(0, 123, 255)); // Set button color to sexy blue
+        displayAllBtn.setForeground(Color.WHITE); // Set button text color to white
+        displayAllBtn.addActionListener(e -> displayAllContacts()); // Add action listener to display all contacts
+
+        RoundedButton deleteBtn = new RoundedButton("Delete", 15);
+        deleteBtn.setBackground(new Color(0, 123, 255)); // Set button color to sexy blue
+        deleteBtn.setForeground(Color.WHITE); // Set button text color to white
+        deleteBtn.addActionListener(e -> deleteContact()); // Add action listener to delete contact
+
+        RoundedButton updateBtn = new RoundedButton("Update", 15);
+        updateBtn.setBackground(new Color(0, 123, 255)); // Set button color to sexy blue
+        updateBtn.setForeground(Color.WHITE); // Set button text color to white
+        updateBtn.addActionListener(e -> updateContact()); // Add action listener to update contact
+
+        RoundedButton analyzeBtn = new RoundedButton("Analyze", 15);
+        analyzeBtn.setBackground(new Color(0, 123, 255)); // Set button color to sexy blue
+        analyzeBtn.setForeground(Color.WHITE); // Set button text color to white
+        analyzeBtn.addActionListener(e -> analyzeSearchEfficiency()); // Add action listener to analyze search efficiency
+
+        // Add buttons to action panel
+        actionPanel.add(insertBtn);
         actionPanel.add(searchBtn);
-
-        // Delete button with blue color
-        JButton deleteBtn = new JButton("Delete Contact");
-        styleButton(deleteBtn);
-        deleteBtn.addActionListener(e -> deleteContact());
-        actionPanel.add(deleteBtn);
-
-        // Display all button with blue color
-        JButton displayAllBtn = new JButton("Display All Contacts");
-        styleButton(displayAllBtn);
-        displayAllBtn.addActionListener(e -> displayAllContacts());
         actionPanel.add(displayAllBtn);
+        actionPanel.add(deleteBtn);
+        actionPanel.add(updateBtn);
+        actionPanel.add(analyzeBtn);
 
-        add(actionPanel, BorderLayout.SOUTH);
+        contentPanel.add(actionPanel, BorderLayout.SOUTH); // Add action panel to the south of the content panel
 
-        setVisible(true);
+        return contentPanel; // Return the completed main page panel
     }
 
-    // Helper method to style buttons (make them blue with white text)
-    private void styleButton(JButton button) {
-        button.setBackground(new Color(70, 130, 180)); // Steel blue color
-        button.setForeground(Color.WHITE); // White text
-        button.setFocusPainted(false); // Remove focus border
-        button.setFont(new Font("Arial", Font.BOLD, 14)); // Slightly larger and bold font
+    // Method to switch from intro page to main page
+    private void switchToMainPage() {
+        CardLayout cl = (CardLayout) getContentPane().getLayout(); // Get CardLayout from the frame
+        cl.show(getContentPane(), "Main"); // Show the main page
     }
 
-    // Insert contact method
+    // Insert a contact into the LinkedList
     public void insertContact() {
-        String name = nameField.getText();
-        String phoneNumber = phoneField.getText();
-        String email = emailField.getText();
+        String name = nameField.getText(); // Get name from input field
+        String phoneNumber = phoneField.getText(); // Get phone number from input field
+        String email = emailField.getText(); // Get email from input field
 
+        // Check if name and phone number are provided
         if (!name.isEmpty() && !phoneNumber.isEmpty()) {
-            Contact newContact = new Contact(name, phoneNumber, email);
-            contacts.add(newContact);
-            tableModel.addRow(new Object[]{name, phoneNumber, email});
-            clearFields();
-            JOptionPane.showMessageDialog(this, "Contact added: " + name);
+            Contact newContact = new Contact(name, phoneNumber, email); // Create new contact
+            contactList.add(newContact); // Add contact to the list
+            tableModel.addRow(new Object[]{name, phoneNumber, email}); // Add contact to the table model
+            clearFields(); // Clear input fields
+            JOptionPane.showMessageDialog(this, "Contact added."); // Show success message
         } else {
-            JOptionPane.showMessageDialog(this, "Please enter both name and phone number.");
+            JOptionPane.showMessageDialog(this, "Name and Phone are required."); // Show error message
         }
     }
 
-    // Search contact method
+    // Search for a contact by name or phone number
     public void searchContact() {
-        String query = searchField.getText();
-        for (Contact contact : contacts) {
+        String query = JOptionPane.showInputDialog("Enter Name or Phone:"); // Prompt user for search query
+        for (Contact contact : contactList) { // Loop through contacts in the list
+            // Check if the query matches the contact's name or phone number
             if (contact.name.equalsIgnoreCase(query) || contact.phoneNumber.equals(query)) {
-                JOptionPane.showMessageDialog(this, "Found: " + contact.name + " - " + contact.phoneNumber + " - " + contact.email);
-                return;
+                JOptionPane.showMessageDialog(this, "Found: " + contact.name + " - " + contact.phoneNumber + " - " + contact.email); // Show found contact
+                return; // Exit method after finding the contact
             }
         }
-        JOptionPane.showMessageDialog(this, "Contact not found.");
+        JOptionPane.showMessageDialog(this, "Contact not found."); // Show not found message
     }
 
-    // Delete contact method
-    public void deleteContact() {
-        String query = searchField.getText();
-        for (int i = 0; i < contacts.size(); i++) {
-            Contact contact = contacts.get(i);
-            if (contact.name.equalsIgnoreCase(query) || contact.phoneNumber.equals(query)) {
-                contacts.remove(i);
-                tableModel.removeRow(i);
-                JOptionPane.showMessageDialog(this, "Contact deleted: " + contact.name);
-                return;
-            }
-        }
-        JOptionPane.showMessageDialog(this, "Contact not found.");
-    }
-
-    // Display all contacts method
+    // Display all contacts in the LinkedList
     public void displayAllContacts() {
-        tableModel.setRowCount(0);
-        for (Contact contact : contacts) {
-            tableModel.addRow(new Object[]{contact.name, contact.phoneNumber, contact.email});
+        tableModel.setRowCount(0); // Clear the table model
+        for (Contact contact : contactList) { // Loop through contacts
+            tableModel.addRow(new Object[]{contact.name, contact.phoneNumber, contact.email}); // Add each contact to the table
         }
     }
 
-    // Clear input fields
-    public void clearFields() {
-        nameField.setText("");
-        phoneField.setText("");
-        emailField.setText("");
+    // Delete a contact by name or phone number
+    public void deleteContact() {
+        String query = JOptionPane.showInputDialog("Enter Name or Phone to Delete:"); // Prompt user for deletion query
+        for (int i = 0; i < contactList.size(); i++) { // Loop through the contact list
+            Contact contact = contactList.get(i); // Get current contact
+            // Check if the query matches the contact's name or phone number
+            if (contact.name.equalsIgnoreCase(query) || contact.phoneNumber.equals(query)) {
+                contactList.remove(i); // Remove contact from the list
+                tableModel.removeRow(i); // Remove contact from the table model
+                JOptionPane.showMessageDialog(this, "Contact deleted."); // Show success message
+                return; // Exit method after deletion
+            }
+        }
+        JOptionPane.showMessageDialog(this, "Contact not found."); // Show not found message
     }
 
+    // Update contact information
+    public void updateContact() {
+        String query = JOptionPane.showInputDialog("Enter Name or Phone to Update:"); // Prompt user for update query
+        for (int i = 0; i < contactList.size(); i++) { // Loop through contact list
+            Contact contact = contactList.get(i); // Get current contact
+            // Check if the query matches the contact's name or phone number
+            if (contact.name.equalsIgnoreCase(query) || contact.phoneNumber.equals(query)) {
+                // Prompt user for new contact details
+                String newName = JOptionPane.showInputDialog("Enter new Name:", contact.name);
+                String newPhone = JOptionPane.showInputDialog("Enter new Phone:", contact.phoneNumber);
+                String newEmail = JOptionPane.showInputDialog("Enter new Email:", contact.email);
+
+                // Update contact details
+                contact.name = newName;
+                contact.phoneNumber = newPhone;
+                contact.email = newEmail;
+
+                // Update the table model with new values
+                tableModel.setValueAt(newName, i, 0);
+                tableModel.setValueAt(newPhone, i, 1);
+                tableModel.setValueAt(newEmail, i, 2);
+                JOptionPane.showMessageDialog(this, "Contact updated."); // Show success message
+                return; // Exit method after update
+            }
+        }
+        JOptionPane.showMessageDialog(this, "Contact not found."); // Show not found message
+    }
+
+    // Analyze search efficiency by measuring time taken for search
+    public void analyzeSearchEfficiency() {
+        String query = JOptionPane.showInputDialog("Enter Name or Phone to Search:"); // Prompt user for search query
+        long startTime = System.nanoTime(); // Record start time
+
+        for (Contact contact : contactList) { // Loop through contacts
+            // Check if the query matches the contact's name or phone number
+            if (contact.name.equalsIgnoreCase(query) || contact.phoneNumber.equals(query)) {
+                long endTime = System.nanoTime(); // Record end time
+                long duration = endTime - startTime; // Calculate duration
+                JOptionPane.showMessageDialog(this, "Found: " + contact.name + "\nSearch Time: " + duration + " nanoseconds."); // Show found message with duration
+                return; // Exit method after finding contact
+            }
+        }
+        long endTime = System.nanoTime(); // Record end time for not found case
+        long duration = endTime - startTime; // Calculate duration
+        JOptionPane.showMessageDialog(this, "Contact not found. Search Time: " + duration + " nanoseconds."); // Show not found message with duration
+    }
+
+    // Clear input fields after adding or updating contact
+    public void clearFields() {
+        nameField.setText(""); // Clear name field
+        phoneField.setText(""); // Clear phone number field
+        emailField.setText(""); // Clear email field
+    }
+
+    // Main method to run the application
     public static void main(String[] args) {
-        new JJ1();
+        new Main(); // Create a new instance of the Main class
     }
 }
